@@ -1,0 +1,22 @@
+name: emoji_drawing_server
+description: A sample command-line application.
+version: 1.0.0
+# repository: https://github.com/my_org/my_repo
+
+executables:
+  emoji-drawing-server: emoji_drawing_server
+
+environment:
+  sdk: ^3.2.4
+
+# Add regular dependencies here.
+dependencies:
+  args: ^2.4.2
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4
+  sqlite_async: ^0.6.0
+  # path: ^1.8.0
+
+dev_dependencies:
+  lints: ^2.1.0
+  test: ^1.24.0
