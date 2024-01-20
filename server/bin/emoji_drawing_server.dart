@@ -10,18 +10,55 @@ import 'package:sqlite_async/sqlite_async.dart';
 class Database {
   final SqliteDatabase database;
   final migrations = SqliteMigrations()
-    ..add(SqliteMigration(
-        1,
-        (tx) async => await tx.execute(
-              '''
-                CREATE TABLE users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT,
-                    password TEXT,
-                    emoji_counter INTEGER DEFAULT 0
-                );
-              ''',
-            )));
+    ..add(SqliteMigration(7, (tx) async {
+      await tx.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT,
+            hide INTEGER DEFAULT 0,
+            admin INTEGER DEFAULT 0,
+            emoji_counter INTEGER DEFAULT 0
+        );
+        """);
+
+//       await tx.execute('''
+// PRAGMA foreign_keys=off;
+// ''');
+      try {
+        await tx.execute('''
+          ALTER TABLE users ADD COLUMN username TEXT;
+        ''');
+      } catch (e) {}
+
+      try {
+        await tx.execute('''
+          ALTER TABLE users ADD COLUMN password TEXT;
+        ''');
+      } catch (e) {}
+
+      try {
+        await tx.execute('''
+          ALTER TABLE users ADD COLUMN hide INTEGER DEFAULT 0;
+        ''');
+      } catch (e) {}
+
+      try {
+        await tx.execute('''
+          ALTER TABLE users ADD COLUMN admin INTEGER DEFAULT 0;
+        ''');
+      } catch (e) {}
+
+      try {
+        await tx.execute('''
+          ALTER TABLE users ADD COLUMN emoji_counter INTEGER DEFAULT 0;
+        ''');
+      } catch (e) {}
+
+//       await tx.execute('''
+// PRAGMA foreign_keys=on;
+// ''');
+    }));
 
   Database(this.database) {
     migrations.migrate(database);
@@ -60,8 +97,9 @@ class Database {
   Future<List<LeaderboardUser>> getTopPlayers(String username) async {
     final res = await database.execute(
       '''
-        SELECT username, emoji_counter, RANK() OVER (ORDER BY emoji_counter DESC) AS emoji_rank
+        SELECT username, emoji_counter, hide, RANK() OVER (ORDER BY emoji_counter DESC) AS emoji_rank
         FROM users
+        WHERE hide = 0
         ORDER BY emoji_counter DESC
         LIMIT 3;
       ''',
@@ -72,18 +110,63 @@ class Database {
     if (topPlayers.every((user) => user.username != username)) {
       final userRes = await database.execute(
         '''
-          SELECT username, emoji_counter
+          SELECT username, emoji_counter, hide, RANK() OVER (ORDER BY emoji_counter DESC) AS emoji_rank
           FROM users
-          WHERE username = (?);
+          WHERE username = (?) and hide = 0;
         ''',
         [
           username,
         ],
       );
-      topPlayers.add(LeaderboardUser.fromJson(userRes.first));
+      if (userRes.isNotEmpty) {
+        topPlayers.add(LeaderboardUser.fromJson(userRes.first));
+      }
     }
 
     return topPlayers;
+  }
+
+  Future<void> hideUser(String username, [bool hide = true]) async {
+    await database.execute(
+      '''
+        UPDATE users
+        SET hide = (?)
+        WHERE username = (?);
+      ''',
+      [
+        hide ? 1 : 0,
+        username,
+      ],
+    );
+  }
+
+  Future<void> changeUsername(String username, String newUsername) async {
+    await database.execute(
+      '''
+        UPDATE users
+        SET username = (?)
+        WHERE username = (?);
+      ''',
+      [
+        newUsername,
+        username,
+      ],
+    );
+  }
+
+  Future<bool> checkIfUserIsAdmin(String username) async {
+    final result = await database.execute(
+      '''
+      SELECT COUNT(*) AS count
+      FROM users
+      WHERE username = (?)
+      AND admin = 1;
+    ''',
+      [
+        username,
+      ],
+    );
+    return result.first['count'] > 0;
   }
 
   Future<void> storeEmoji(String username, String emojiBase64, int emojiId, Directory imageDir) async {
@@ -195,6 +278,60 @@ void main(List<String> args) async {
     return Response.ok(jsonEncode(topPlayers));
   });
 
+  app.post('/api/changeUsername', (Request request) async {
+    final (
+      username,
+      authRes
+    ) = await authorize(request);
+    if (authRes != null) return authRes;
+    if (!(await database.checkIfUserIsAdmin(username))) {
+      return Response.forbidden('You are not an admin');
+    }
+
+    final body = await request.readAsString();
+    final json = jsonDecode(body);
+
+    await database.changeUsername(json['username'] as String, json['newUsername'] as String);
+
+    return Response.ok(null);
+  });
+
+  app.post('/api/hide', (Request request) async {
+    final (
+      username,
+      authRes
+    ) = await authorize(request);
+    if (authRes != null) return authRes;
+    if (!(await database.checkIfUserIsAdmin(username))) {
+      return Response.forbidden('You are not an admin');
+    }
+
+    final body = await request.readAsString();
+    final json = jsonDecode(body);
+
+    await database.hideUser(json['username'] as String);
+
+    return Response.ok(null);
+  });
+
+  app.post('/api/unhide', (Request request) async {
+    final (
+      username,
+      authRes
+    ) = await authorize(request);
+    if (authRes != null) return authRes;
+    if (!(await database.checkIfUserIsAdmin(username))) {
+      return Response.forbidden('You are not an admin');
+    }
+
+    final body = await request.readAsString();
+    final json = jsonDecode(body);
+
+    await database.hideUser(json['username'] as String, false);
+
+    return Response.ok(null);
+  });
+
   app.post('/api/login', (Request request) async {
     final body = await request.readAsString();
     final json = jsonDecode(body);
@@ -205,7 +342,11 @@ void main(List<String> args) async {
       return Response.forbidden('Bad username or password');
     }
 
-    if (!(await database.checkIfUserExists(username!, password!))) {
+    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(username!)) {
+      return Response.forbidden('Only alphanumeric characters allowed');
+    }
+
+    if (!(await database.checkIfUserExists(username, password!))) {
       if (await database.checkIfUserExists(username)) {
         return Response.forbidden('User already exists');
       }

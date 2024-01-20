@@ -119,7 +119,13 @@ export default function Draw() {
                     emojiBase64: canvasRef.current?.getDataURL("png"),
                     emojiId: emojiIndex,
                   })
-                })
+                }).then(async (res) => {
+                  if (res.status !== 200) {
+                    alert(`Error: ${await res.text()}. Emoji was not sent, refresh the site!`);
+                  }
+                }).catch((_err) => {
+                    alert(`Error: while sending emoji. Emoji was not sent, refresh the site!`);
+                });
 
                 // Next
                 setEmojiIndex(randomEmojiIndexNot(emojiIndex));

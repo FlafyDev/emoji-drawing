@@ -21,8 +21,12 @@
         emoji-drawing-server = pkgs.callPackage ./server/package.nix {};
       };
       # TODO: Generate dev shell from packages.
-      # devShell = pkgs.mkShell {
-      # };
+      devShell = pkgs.mkShell {
+        nativeBuildInputs = with pkgs; [
+          flutter316
+          sqlite
+        ];
+      };
     })
     // {
       overlays.default = _final: prev: {
