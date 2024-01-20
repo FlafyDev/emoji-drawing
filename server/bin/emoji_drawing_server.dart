@@ -132,7 +132,7 @@ void main(List<String> args) async {
         Response?
       )> authorize(Request request) async {
     try {
-      final authCookie = request.headers['cookie']?.split(';').firstWhere((element) => element.startsWith('auth=')).substring(5);
+      final authCookie = request.headers['cookie']?.split(';').firstWhere((element) => element.trim().startsWith('auth=')).trim().substring(5);
       final authSplit = utf8.decode(base64Decode(authCookie!)).split(':');
       final username = authSplit[0];
       final password = authSplit[1];
