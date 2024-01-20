@@ -359,6 +359,12 @@ void main(List<String> args) async {
     });
   });
 
+  app.post('/api/logout', (Request request) async {
+    return Response.ok(null, headers: {
+      'Set-Cookie': 'auth=; Path=/; HttpOnly; SameSite=Strict'
+    });
+  });
+
   print('Listening on $host:$port');
   final server = await io.serve(app, host, port);
 }

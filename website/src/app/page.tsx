@@ -38,6 +38,22 @@ export default function Home() {
           <Typography component="h1" variant="h5">
             Emoji Drawing
           </Typography>
+          <Typography
+            variant="subtitle2"
+            align="center"
+            color="text.secondary"
+            component="p"
+          >
+            {"For my ML project, I need to collect data of emoji drawings. Please help me do so!"}
+          </Typography>
+          <Typography
+            variant="subtitle2"
+            align="center"
+            color="text.secondary"
+            component="p"
+          >
+            {"The goal is to have around 7000 drawings."}
+          </Typography>
           <TextField
             margin="normal"
             fullWidth

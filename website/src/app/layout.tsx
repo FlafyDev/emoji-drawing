@@ -3,6 +3,7 @@ import './globals.css'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import { ThemeProvider } from '@mui/system';
 import theme from './theme';
+import { emojiIndexToName } from '@/utils/emoji';
 
 
 // or `v1X-appRouter` if you are using Next.js v1X
@@ -19,6 +20,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {
+          Array.from({ length: 17 }, (_, index) => (
+            <link key={index} rel="preload" href={`emojis/${emojiIndexToName[index]}`} as="image" />
+          ))
+        }
+      </head>
       <body>
         <ThemeProvider theme={theme}>
           <AppRouterCacheProvider>{children}</AppRouterCacheProvider>

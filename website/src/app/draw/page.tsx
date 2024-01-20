@@ -11,8 +11,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import UndoIcon from '@mui/icons-material/Undo';
 import CheckIcon from '@mui/icons-material/Check';
 import { useEffect, useRef, useState } from 'react';
-import { SkipNext } from '@mui/icons-material';
+import { Logout } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
+import Head from 'next/head';
 
 export default function Draw() {
   const router = useRouter()
@@ -124,7 +125,7 @@ export default function Draw() {
                     alert(`Error: ${await res.text()}. Emoji was not sent, refresh the site!`);
                   }
                 }).catch((_err) => {
-                    alert(`Error: while sending emoji. Emoji was not sent, refresh the site!`);
+                  alert(`Error: while sending emoji. Emoji was not sent, refresh the site!`);
                 });
 
                 // Next
@@ -148,15 +149,12 @@ export default function Draw() {
             <Button
               sx={{ mt: 1, mb: 1, aspectRatio: 1, }}
               color="error"
-              onPointerDown={() => {
-                setEmojiIndex(randomEmojiIndexNot(emojiIndex));
-                canvasRef.current?.clear();
-                canvasRef.current?.clear();
-                canvasRef.current?.clear();
-                canvasRef.current?.clear();
+              onPointerDown={async () => {
+                await fetch('/api/logout', { method: 'POST' });
+                router.push("/");
               }}
             >
-              <SkipNext />
+              <Logout />
             </Button>
           </Box>
         </Box>
