@@ -1,8 +1,8 @@
-{buildNpmPackage}:
+{buildNpmPackage, version}:
 
 buildNpmPackage rec {
   pname = "emoji-drawing-website";
-  version = "unknown";
+  inherit version;
 
   src = ./.;
 

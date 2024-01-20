@@ -1,8 +1,8 @@
-{buildDartApplication, lib, sqlite, makeWrapper}:
+{buildDartApplication, lib, sqlite, makeWrapper, version}:
 
 buildDartApplication rec {
   pname = "emoji-drawing-server";
-  version = "unknown";
+  inherit version;
 
   src = ./.;
   autoPubspecLock = src + "/pubspec.lock";
