@@ -72,6 +72,14 @@ export default function Home() {
             color="text.secondary"
             component="p"
           >
+            {"Don't input your real password, this is not secure."}
+          </Typography>
+          <Typography
+            variant="subtitle2"
+            align="center"
+            color="text.secondary"
+            component="p"
+          >
             {error}
           </Typography>
           <Button
