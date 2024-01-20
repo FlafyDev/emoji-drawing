@@ -11,6 +11,7 @@ export default function Home() {
   const router = useRouter()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetch('/api/isLogged', { method: 'POST' })
@@ -65,6 +66,14 @@ export default function Home() {
             }}
             sx={{ mt: 1, mb: 1 }}
           />
+          <Typography
+            variant="subtitle2"
+            align="center"
+            color="text.secondary"
+            component="p"
+          >
+            {error}
+          </Typography>
           <Button
             fullWidth
             variant="contained"
@@ -80,6 +89,10 @@ export default function Home() {
                 .then((res) => {
                   if (res.status === 200) {
                     router.push("/draw")
+                  } else {
+                    res.text().then((text) => {
+                      setError(text ?? "");
+                    })
                   }
                 })
             }}
@@ -91,12 +104,3 @@ export default function Home() {
     </main>
   )
 }
-// <Typography
-//   variant="subtitle2"
-//   align="center"
-//   color="text.secondary"
-//   component="p"
-// >
-//   The name already exists.<br />
-//   Please try another one or use the correct password.
-// </Typography>
