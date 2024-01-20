@@ -54,7 +54,10 @@ in {
       groups.${cfg.user} = {};
     };
     systemd.services.emoji-drawing = {
-      after = ["network.target"];
+      after = ["network-online.target"];
+      wantedBy = ["multi-user.target"];
+      wants = ["network-online.target"];
+      startLimitIntervalSec = 60;
       description = "Start Emoji Drawing";
       serviceConfig = {
         # username that systemd will look for; if it exists, it will start a service associated with that user
