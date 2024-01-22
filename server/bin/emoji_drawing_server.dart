@@ -101,7 +101,7 @@ class Database {
         FROM users
         WHERE hide = 0
         ORDER BY emoji_counter DESC
-        LIMIT 3;
+        LIMIT 5;
       ''',
     );
 
@@ -110,9 +110,12 @@ class Database {
     if (topPlayers.every((user) => user.username != username)) {
       final userRes = await database.execute(
         '''
-          SELECT username, emoji_counter, hide, RANK() OVER (ORDER BY emoji_counter DESC) AS emoji_rank
-          FROM users
-          WHERE username = (?) and hide = 0;
+          SELECT username, emoji_counter, hide, emoji_rank
+          FROM (
+              SELECT username, emoji_counter, hide, RANK() OVER (ORDER BY emoji_counter DESC) AS emoji_rank
+              FROM users
+          ) AS ranked_users
+          WHERE username = (?) AND hide = 0;
         ''',
         [
           username,
