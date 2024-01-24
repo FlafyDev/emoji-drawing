@@ -17,7 +17,7 @@ export default function Home() {
     fetch('/api/isLogged', { method: 'POST' })
       .then((res) => {
         if (res.status === 200) {
-          router.push("/draw")
+          router.push("/predict")
         }
       })
   }, [router])
@@ -113,7 +113,7 @@ export default function Home() {
                 })
             }}
           >
-            Login
+            Login / Register
           </Button>
         </Box>
       </Container>

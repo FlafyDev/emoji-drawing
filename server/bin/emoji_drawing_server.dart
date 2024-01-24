@@ -443,8 +443,8 @@ void main(List<String> args) async {
         return Response.forbidden('User already exists');
       }
 
-      return Response.forbidden("User doesn't exists");
-      // await database.createUser(username, password);
+      // return Response.forbidden("User doesn't exists");
+      await database.createUser(username, password);
     }
 
     return Response.ok(base64Encode(utf8.encode('$username:$password')), headers: {
