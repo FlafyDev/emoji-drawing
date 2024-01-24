@@ -29,6 +29,7 @@
           sqlite
           nodejs_20
         ];
+        LD_LIBRARY_PATH = "LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath (with pkgs; [sqlite])}";
       };
     })
     // {

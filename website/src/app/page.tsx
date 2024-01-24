@@ -44,15 +44,7 @@ export default function Home() {
             color="text.secondary"
             component="p"
           >
-            {"For my ML project, I need to collect data of emoji drawings. Please help me do so!"}
-          </Typography>
-          <Typography
-            variant="subtitle2"
-            align="center"
-            color="text.secondary"
-            component="p"
-          >
-            {"The goal is to have around 7000 drawings."}
+            {"Thank you for drawing emojis!"}
           </Typography>
           <TextField
             margin="normal"
@@ -112,7 +104,7 @@ export default function Home() {
               })
                 .then((res) => {
                   if (res.status === 200) {
-                    router.push("/draw")
+                    router.push("/predict")
                   } else {
                     res.text().then((text) => {
                       setError(text ?? "");
@@ -121,7 +113,7 @@ export default function Home() {
                 })
             }}
           >
-            Login / Register
+            Login
           </Button>
         </Box>
       </Container>

@@ -12,6 +12,8 @@ environment:
 # Add regular dependencies here.
 dependencies:
   args: ^2.4.2
+  http: ^1.2.0
+  image: ^4.1.4
   shelf: ^1.4.1
   shelf_router: ^1.1.4
   sqlite_async: ^0.6.0

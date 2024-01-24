@@ -13,13 +13,13 @@ import CheckIcon from '@mui/icons-material/Check';
 import { useEffect, useRef, useState } from 'react';
 import { Logout } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import Head from 'next/head';
 
 export default function Draw() {
   const router = useRouter()
   const canvasRef = useRef<CanvasDraw>(null);
-  const focusRef = useRef<HTMLButtonElement>(null);
-  const [emojiIndex, setEmojiIndex] = useState(randomEmojiIndex());
+  const [predictedEmojiIndex, setPredictedEmojiIndex] = useState<number | null>(null);
+  const [predictedConfidence, setPredictedConfidence] = useState<string>("");
+  const [predictedMessage, setPredictedMessage] = useState("");
   const [username, setUsername] = useState("");
 
   useEffect(() => {
@@ -27,9 +27,6 @@ export default function Draw() {
       .then(async (res) => {
         if (res.status !== 200) {
           router.push("/")
-          return;
-        } else {
-          router.push("/predict")
           return;
         }
         setUsername(await res.text());
@@ -56,10 +53,18 @@ export default function Draw() {
             mb: 2,
           }}>
             <Typography component="h1" variant="h5" fontWeight={"bold"} sx={{ mb: 1 }}>
-              Draw
+              Draw whatever emoji you want!
             </Typography>
-            <img src={`emojis/${emojiIndexToName[emojiIndex]}`} alt="Emoji" style={{ height: 80 }}></img>
+            <Box sx={{ display: "flex", gap: "16px", justifyContent: "center", alignItems: "center", flexFlow: "row wrap" }}
+            >
+              {
+                Array.from({ length: 18 }, (_, emojiIndex) => (
+                  <img key={emojiIndex} src={`emojis/${emojiIndexToName[emojiIndex]}`} alt="Emoji" style={{ height: 25 }}></img>
+                ))
+              }
+            </Box>
           </Box>
+
 
           <CanvasDraw
             ref={canvasRef}
@@ -79,6 +84,32 @@ export default function Draw() {
           // }}
 
           />
+          {
+            predictedEmojiIndex !== null ?
+              <img src={`emojis/${emojiIndexToName[predictedEmojiIndex]}`} alt="Emoji" style={{ height: 80 }}></img> : <></>
+          }
+          {
+            predictedConfidence !== "" ?
+              (<Typography
+                variant="subtitle2"
+                align="center"
+                color="text.secondary"
+                component="p"
+                sx={{ mt: 1 }}
+              >{predictedConfidence}<br /> </Typography>)
+              : <></>
+          }
+          {
+            predictedMessage !== "" ?
+              (<Typography
+                variant="subtitle2"
+                align="center"
+                color="text.secondary"
+                component="p"
+                sx={{ mt: 1 }}
+              >{predictedMessage}<br /> </Typography>)
+              : <></>
+          }
 
           <Typography
             variant="subtitle2"
@@ -114,25 +145,37 @@ export default function Draw() {
             <Button
               sx={{ mt: 1, mb: 1, aspectRatio: 1, pointerEvents: "all" }}
               color="success"
-              onPointerDown={() => {
+              onPointerDown={async () => {
                 // Send
-                fetch('/api/send', {
+                await fetch('/api/predictEmoji', {
                   method: 'POST',
                   body: JSON.stringify({
                     // @ts-ignore
                     emojiBase64: canvasRef.current?.getDataURL("png"),
-                    emojiId: emojiIndex,
                   })
                 }).then(async (res) => {
-                  if (res.status !== 200) {
-                    alert(`Error: ${await res.text()}. Emoji was not sent, refresh the site!`);
+                  const json = await res.json();
+                  if (res.status === 200) {
+                    if (json["message"] !== undefined) {
+                      setPredictedMessage(json["message"] as string)
+                      setPredictedConfidence("")
+                      setPredictedEmojiIndex(null)
+                      return
+                    }
+
+                    const emojiIndex = parseInt(json["index"])
+                    const confidence = json["confidence"] as string
+
+                    setPredictedMessage("")
+                    setPredictedEmojiIndex(emojiIndex)
+                    setPredictedConfidence(confidence)
+                  } else {
+                    setPredictedMessage(json["error"])
                   }
                 }).catch((_err) => {
                   alert(`Error: while sending emoji. Emoji was not sent, refresh the site!`);
                 });
 
-                // Next
-                setEmojiIndex(randomEmojiIndexNot(emojiIndex));
                 canvasRef.current?.clear();
                 canvasRef.current?.clear();
                 canvasRef.current?.clear();
@@ -162,8 +205,9 @@ export default function Draw() {
           </Box>
         </Box>
       </Container>
-    </main>
+    </main >
   )
 }
+
 
 

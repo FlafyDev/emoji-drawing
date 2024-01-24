@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {
-          Array.from({ length: 17 }, (_, index) => (
+          Array.from({ length: 18 }, (_, index) => (
             <link key={index} rel="preload" href={`emojis/${emojiIndexToName[index]}`} as="image" />
           ))
         }

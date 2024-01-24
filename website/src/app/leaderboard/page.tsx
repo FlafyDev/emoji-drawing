@@ -66,7 +66,7 @@ export default function Leaderboard() {
           variant="contained"
           sx={{ mt: 1, mb: 1 }}
           onClick={() => {
-            router.push("/draw")
+            router.push("/predict")
           }}
         >
           Continue drawing

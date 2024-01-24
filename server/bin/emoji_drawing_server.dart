@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf/shelf.dart';
+import 'package:http/http.dart' as http;
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:sqlite_async/sqlite_async.dart';
+import 'package:image/image.dart';
 
 class Database {
   final SqliteDatabase database;
@@ -143,6 +145,21 @@ class Database {
     );
   }
 
+  Future<bool> isUserHidden(String username) async {
+    final result = await database.execute(
+      '''
+      SELECT COUNT(*) AS count
+      FROM users
+      WHERE username = (?)
+      AND hide = 1;
+    ''',
+      [
+        username,
+      ],
+    );
+    return result.first['count'] > 0;
+  }
+
   Future<void> changeUsername(String username, String newUsername) async {
     await database.execute(
       '''
@@ -196,6 +213,8 @@ void main(List<String> args) async {
   parser.addOption('port', abbr: 'p', defaultsTo: '8080');
   parser.addOption('host', abbr: 'H', defaultsTo: 'localhost');
   parser.addOption('data-dir', abbr: 'D', mandatory: true);
+  parser.addFlag('filter-images', defaultsTo: false);
+  parser.addFlag('filter-images-dry', defaultsTo: false);
 
   final results = parser.parse(args);
   final port = int.parse(results['port']);
@@ -211,6 +230,52 @@ void main(List<String> args) async {
   }
 
   final database = Database(SqliteDatabase(path: '${dataDir.path}/database.db'));
+
+  if (results['filter-images']) {
+    final images = imagesDir.listSync();
+    for (final imageFileEntity in images) {
+      final imageFile = File(imageFileEntity.path);
+      final imageName = imageFile.path.split('/').last;
+      final username = imageName.split('-').first;
+      final emojiId = int.parse(imageName.split('-')[1]);
+      final timestamp = DateTime.fromMillisecondsSinceEpoch(int.parse(imageName.split('-')[2].split('.').first));
+
+      if (await database.isUserHidden(username)) {
+        print('Deleting $imageName');
+        if (!results['filter-images-dry']) {
+          imageFile.deleteSync();
+        }
+        continue;
+      }
+
+      final imageBytes = imageFile.readAsBytesSync();
+      final image = decodeImage(imageBytes);
+      if (image == null) {
+        print('Deleting $imageName');
+        if (!results['filter-images-dry']) {
+          imageFile.deleteSync();
+        }
+        continue;
+      }
+      int transparentPixels = 0;
+      for (int y = 0; y < image.height; y++) {
+        for (int x = 0; x < image.width; x++) {
+          final pixel = image.getPixel(x, y);
+          if (pixel.a < 10) {
+            transparentPixels++;
+          }
+        }
+      }
+      if (transparentPixels / (image.width * image.height) > 0.99) {
+        print('Deleting $imageName');
+        if (!results['filter-images-dry']) {
+          imageFile.deleteSync();
+        }
+        continue;
+      }
+    }
+    exit(0);
+  }
 
   Future<
       (
@@ -248,6 +313,30 @@ void main(List<String> args) async {
     if (authRes != null) return authRes;
 
     return Response.ok(username);
+  });
+
+  app.post('/api/predictEmoji', (Request request) async {
+    final (
+      username,
+      authRes
+    ) = await authorize(request);
+    if (authRes != null) return authRes;
+
+    final body = await request.readAsString();
+    final json = jsonDecode(body);
+    if ((json['emojiBase64'] as String? ?? "").length < 6) {
+      return Response.forbidden('Invalid emoji');
+    }
+    // Custom emoji prediction server.
+    final res = await http.post(Uri.parse("http://10.0.0.41:3001/upload"),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "emojiBase64": json['emojiBase64'],
+        }));
+
+    return Response(res.statusCode, body: res.body);
   });
 
   app.post('/api/send', (Request request) async {
@@ -354,7 +443,8 @@ void main(List<String> args) async {
         return Response.forbidden('User already exists');
       }
 
-      await database.createUser(username, password);
+      return Response.forbidden("User doesn't exists");
+      // await database.createUser(username, password);
     }
 
     return Response.ok(base64Encode(utf8.encode('$username:$password')), headers: {
