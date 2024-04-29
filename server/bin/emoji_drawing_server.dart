@@ -328,7 +328,7 @@ void main(List<String> args) async {
       return Response.forbidden('Invalid emoji');
     }
     // Custom emoji prediction server.
-    final res = await http.post(Uri.parse("http://10.0.0.41:3001/upload"),
+    final res = await http.post(Uri.parse("http://localhost:3001/upload"),
         headers: {
           'Content-Type': 'application/json',
         },
