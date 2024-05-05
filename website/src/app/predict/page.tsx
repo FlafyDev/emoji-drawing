@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import styles from './page.module.css'
-import { Avatar, Box, Button, Checkbox, Container, CssBaseline, FormControlLabel, Icon, TextField, Typography } from '@mui/material'
+import { Avatar, Box, Button, Checkbox, Container, CssBaseline, FormControlLabel, Icon, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { emojiIndexToName, randomEmojiIndex, randomEmojiIndexNot } from '@/utils/emoji'
 import CanvasDraw from "react-canvas-draw";
 import Canvas from '@/utils/canvas';
@@ -21,6 +21,12 @@ export default function Draw() {
   const [predictedConfidence, setPredictedConfidence] = useState<string>("");
   const [predictedMessage, setPredictedMessage] = useState("");
   const [username, setUsername] = useState("");
+  const [model, setModel] = useState(0);
+  const modelNames = [
+    "CNN",
+    "CNN + Transfer Learning",
+    "CNN + Transfer Learning + Fine Tuning",
+  ]
 
   useEffect(() => {
     fetch('/api/isLogged', { method: 'POST' })
@@ -53,7 +59,7 @@ export default function Draw() {
             mb: 2,
           }}>
             <Typography component="h1" variant="h5" fontWeight={"bold"} sx={{ mb: 1 }}>
-              Draw whatever emoji you want!
+              {"Draw any emoji you want!"}
             </Typography>
             <Box sx={{ display: "flex", gap: "16px", justifyContent: "center", alignItems: "center", flexFlow: "row wrap" }}
             >
@@ -84,10 +90,15 @@ export default function Draw() {
           // }}
 
           />
-          {
-            predictedEmojiIndex !== null ?
-              <img src={`emojis/${emojiIndexToName[predictedEmojiIndex]}`} alt="Emoji" style={{ height: 80 }}></img> : <></>
-          }
+          <img
+            src={`emojis/${emojiIndexToName[predictedEmojiIndex ?? 0]}`}
+            alt="Emoji"
+            style={{
+              visibility: predictedEmojiIndex == null ? "hidden" : "visible",
+              height: 80,
+              marginBottom: -15,
+            }}
+          ></img>
           {
             predictedConfidence !== "" ?
               (<Typography
@@ -110,17 +121,6 @@ export default function Draw() {
               >{predictedMessage}<br /> </Typography>)
               : <></>
           }
-
-          <Typography
-            variant="subtitle2"
-            align="center"
-            color="text.secondary"
-            component="p"
-            sx={{ mt: 1 }}
-          >
-            Player name: {username}<br />
-
-          </Typography>
 
           <Box sx={{ width: '100%', display: "flex", gap: "16px", justifyContent: "center", alignItems: "center", flexDirection: "row" }}>
             <Button
@@ -202,6 +202,30 @@ export default function Draw() {
             >
               <Logout />
             </Button>
+          </Box>
+          <Box>
+            <Typography
+              variant="subtitle2"
+              align="center"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 0, mb: 1, }}
+            >
+              {"Models:"}
+            </Typography>
+            <ToggleButtonGroup
+              color="primary"
+              value={model}
+              orientation="vertical"
+              exclusive
+              onChange={(e, v) => setModel(v)}
+              aria-label="Platform"
+              sx={{ mt: 0, mb: 5, }}
+            >
+              {modelNames.map((name, index) => (
+                <ToggleButton key={index} value={index}>{name}</ToggleButton>
+              ))}
+            </ToggleButtonGroup>
           </Box>
         </Box>
       </Container>
