@@ -27,6 +27,11 @@ export default function Draw() {
     "CNN + Transfer Learning",
     "CNN + Transfer Learning + Fine Tuning",
   ]
+  const modelTypes = [
+    "cnn",
+    "transfer",
+    "transfer-fine",
+  ]
 
   useEffect(() => {
     fetch('/api/isLogged', { method: 'POST' })
@@ -152,6 +157,7 @@ export default function Draw() {
                   body: JSON.stringify({
                     // @ts-ignore
                     emojiBase64: canvasRef.current?.getDataURL("png"),
+                    modelType: modelTypes[model], 
                   })
                 }).then(async (res) => {
                   const json = await res.json();

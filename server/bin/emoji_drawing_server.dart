@@ -334,6 +334,7 @@ void main(List<String> args) async {
         },
         body: jsonEncode({
           "emojiBase64": json['emojiBase64'],
+          "modelType": json['modelType'],
         }));
 
     return Response(res.statusCode, body: res.body);
