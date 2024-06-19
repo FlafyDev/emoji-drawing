@@ -21,7 +21,7 @@ export default function Draw() {
   const [predictedConfidence, setPredictedConfidence] = useState<string>("");
   const [predictedMessage, setPredictedMessage] = useState("");
   const [username, setUsername] = useState("");
-  const [model, setModel] = useState(0);
+  const [model, setModel] = useState(2);
   const modelNames = [
     "CNN",
     "CNN + Transfer Learning",
